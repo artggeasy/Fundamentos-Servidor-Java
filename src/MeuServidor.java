@@ -11,6 +11,19 @@ public class MeuServidor {
         // Cria servidor na porta 9000
         HttpServer server = HttpServer.create(new InetSocketAddress(9000), 0);
 
+        // Lista de Tarefas no servidor
+        java.util.List<Tarefa> tarefas = new java.util.ArrayList<>();
+        tarefas.add(new Tarefa(1, "Estudar Java", false));
+        tarefas.add(new Tarefa(2, "Treinar", true));
+        tarefas.add(new Tarefa(3, "Ler um livro", false));
+
+        // Lista de Comidas no Servidor
+        java.util.List<Comida> comidas = new java.util.ArrayList<>();
+        comidas.add(new Comida(4, "Maça", false));
+        comidas.add(new Comida(5, "Salada", true));
+        comidas.add(new Comida(6, "Banana", false));
+
+
         // =========================
         // Endpoint /hello
         // =========================
@@ -53,6 +66,26 @@ public class MeuServidor {
             os.write(resposta.getBytes());
             os.close();
         });
+        // =========================
+        // Endpoint / comida
+        // =========================
+        server.createContext("/comida", exchange -> {
+            StringBuilder food = new StringBuilder("[");
+            for(int i=0;i<comidas.size();i++){
+                food.append(comidas.get(i).toJson());
+                if(i!=comidas.size()-1){
+                    food.append(", ");
+                }
+            }
+            food.append("]");
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+
+            String resposta = food.toString();
+            exchange.sendResponseHeaders(200, resposta.getBytes().length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(resposta.getBytes());
+            os.close();
+        });
 
         // =========================
         // Endpoint /ola?nome=SeuNome
@@ -76,6 +109,26 @@ public class MeuServidor {
         });
 
         // =========================
+        // Endpoint / tarefa
+        // =========================
+        server.createContext("/tarefa", exchange -> {
+            StringBuilder json = new StringBuilder("[");
+            for (int i = 0; i < tarefas.size(); i++) {//3
+                json.append(tarefas.get(i).toJson());
+                if (i < tarefas.size() - 1) json.append(","); // vírgula entre os itens
+            }
+            json.append("]");
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+
+            String resposta = json.toString();
+            exchange.sendResponseHeaders(200, resposta.getBytes().length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(resposta.getBytes());
+            os.close();
+        });
+
+        // =========================
         // Inicia o servidor
         // =========================
         server.start();
@@ -86,5 +139,39 @@ public class MeuServidor {
         System.out.println("http://localhost:9000/bye");
         System.out.println("http://localhost:9000/Time");
         System.out.println("http://localhost:9000/ola?nome=Arthur");
+        System.out.println("http://localhost:9000/tarefa");
+        System.out.println("http://localhost:9000/comida");
+    }
+    static class Tarefa{
+        int id;
+        String titulo;
+        boolean feito;
+
+        public Tarefa(int id, String titulo, boolean feito) {
+            this.id = id;
+            this.titulo = titulo;
+            this.feito = feito;
+        }
+        String toJson(){
+            return "{ \"id\": " + id +
+                    ", \"titulo\": \"" + titulo + "\"" +
+                    ", \"feito\": " + feito + " }";
+        }
+    }
+    static class Comida{
+        int id;
+        String titulo;
+        boolean feito;
+
+        public Comida(int id, String titulo, boolean feito) {
+            this.id = id;
+            this.titulo = titulo;
+            this.feito = feito;
+        }
+        String toJson(){
+            return "{ \"id\": " + id +
+                    ", \"titulo\": \"" + titulo + "\"" +
+                    ", \"feito\": " + feito + " }";
+        }
     }
 }
