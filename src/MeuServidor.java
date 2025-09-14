@@ -17,13 +17,6 @@ public class MeuServidor {
         tarefas.add(new Tarefa(2, "Treinar", true));
         tarefas.add(new Tarefa(3, "Ler um livro", false));
 
-        // Lista de Comidas no Servidor
-        java.util.List<Comida> comidas = new java.util.ArrayList<>();
-        comidas.add(new Comida(4, "Maça", false));
-        comidas.add(new Comida(5, "Salada", true));
-        comidas.add(new Comida(6, "Banana", false));
-
-
         // =========================
         // Endpoint /hello
         // =========================
@@ -66,26 +59,7 @@ public class MeuServidor {
             os.write(resposta.getBytes());
             os.close();
         });
-        // =========================
-        // Endpoint / comida
-        // =========================
-        server.createContext("/comida", exchange -> {
-            StringBuilder food = new StringBuilder("[");
-            for(int i=0;i<comidas.size();i++){
-                food.append(comidas.get(i).toJson());
-                if(i!=comidas.size()-1){
-                    food.append(", ");
-                }
-            }
-            food.append("]");
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
 
-            String resposta = food.toString();
-            exchange.sendResponseHeaders(200, resposta.getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(resposta.getBytes());
-            os.close();
-        });
 
         // =========================
         // Endpoint /ola?nome=SeuNome
@@ -129,6 +103,42 @@ public class MeuServidor {
         });
 
         // =========================
+        // Endpoint POST /tarefas
+        // =========================
+        server.createContext("/tarefas", exchange -> {
+            if ("POST".equals(exchange.getRequestMethod())) {
+                // Lê o corpo da requisição (JSON enviado)
+                String body = new String(exchange.getRequestBody().readAllBytes());
+
+                // Aqui estamos simplificando e só criando uma nova tarefa "fake"
+                // (depois podemos aprender a converter o JSON em objeto de verdade)
+                int novoId = tarefas.size() + 1;
+                Tarefa nova = new Tarefa(novoId, body, false); // por enquanto título = body inteiro
+
+                // Adiciona na lista
+                tarefas.add(nova);
+
+                // Responde em JSON
+                String resposta = "{ \"mensagem\": \"Tarefa adicionada com sucesso!\" }";
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, resposta.getBytes().length);
+
+                OutputStream os = exchange.getResponseBody();
+                os.write(resposta.getBytes());
+                os.close();
+
+            } else {
+                // Se não for POST, responde erro
+                String resposta = "{ \"erro\": \"Use o método POST\" }";
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.sendResponseHeaders(405, resposta.getBytes().length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(resposta.getBytes());
+                os.close();
+            }
+        });
+
+        // =========================
         // Inicia o servidor
         // =========================
         server.start();
@@ -140,7 +150,6 @@ public class MeuServidor {
         System.out.println("http://localhost:9000/Time");
         System.out.println("http://localhost:9000/ola?nome=Arthur");
         System.out.println("http://localhost:9000/tarefa");
-        System.out.println("http://localhost:9000/comida");
     }
     static class Tarefa{
         int id;
@@ -158,20 +167,5 @@ public class MeuServidor {
                     ", \"feito\": " + feito + " }";
         }
     }
-    static class Comida{
-        int id;
-        String titulo;
-        boolean feito;
 
-        public Comida(int id, String titulo, boolean feito) {
-            this.id = id;
-            this.titulo = titulo;
-            this.feito = feito;
-        }
-        String toJson(){
-            return "{ \"id\": " + id +
-                    ", \"titulo\": \"" + titulo + "\"" +
-                    ", \"feito\": " + feito + " }";
-        }
-    }
 }
